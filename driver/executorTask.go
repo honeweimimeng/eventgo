@@ -3,6 +3,7 @@ package driver
 import (
 	"context"
 	"github.com/sirupsen/logrus"
+	"sync"
 )
 
 type ExecutorTask struct {
@@ -10,12 +11,22 @@ type ExecutorTask struct {
 	channel  Channel
 }
 
+var (
+	pool1 = sync.Pool{New: func() any {
+		return &ExecutorTask{}
+	}}
+)
+
 func NewTask(ex Executor, ch Channel) *ExecutorTask {
-	return &ExecutorTask{executor: ex, channel: ch}
+	task := pool1.Get().(*ExecutorTask)
+	task.executor = ex
+	task.channel = ch
+	return task
 }
 
 func (e *ExecutorTask) Run() {
 	e.executor.Execute(e.channel)
+	pool1.Put(e)
 }
 
 func (e *ExecutorTask) Ctx() context.Context {

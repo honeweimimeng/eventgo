@@ -43,10 +43,9 @@ func TestNormalSocketEvent(t *testing.T) {
 	var boot event.BootStrap
 	boot.EventLoop().Handle(Events(0), func(ch driver.Channel) {
 		println("===>")
-		time.Sleep(2 * time.Second)
-		println("===>finish")
 	}).Trigger(func(ch chan []event.Proto) {
 		ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+		time.Sleep(2 * time.Second)
 		ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
 	}).Boot().StartUp()
 	time.Sleep(200 * time.Second)
