@@ -10,7 +10,7 @@
 ```golang
 var boot event.BootStrap
 boot.EventLoop().Handle(Events(0), func(ch driver.Channel) {
-println("===>")
+    println("===>")
 	time.Sleep(2 * time.Second)
 	println("===>finish")
 }).Trigger(func(ch chan []event.Proto) {
