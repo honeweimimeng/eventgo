@@ -38,10 +38,7 @@ func (t *FifoPipe) PushTask(task Task) {
 }
 
 func (t *FifoPipe) PopTask() Task {
-	if t.CompareCall(-1, func() {}) > 0 {
-		return <-t.Channel
-	}
-	return nil
+	return <-t.Channel
 }
 
 func (t *FifoPipe) CompareCall(payload int32, call func()) int {
