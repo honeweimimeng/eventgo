@@ -3,8 +3,8 @@ package pool
 import (
 	"container/heap"
 	"context"
+	"github.com/honeweimimeng/eventgo/utils"
 	"github.com/sirupsen/logrus"
-	"litecluster/utils"
 	"testing"
 	"time"
 )

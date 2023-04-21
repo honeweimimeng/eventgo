@@ -30,16 +30,25 @@ func (p *DefaultPool) StartUp() {
 				println("done msg:", p.Ctx.Err().Error())
 				return
 			default:
-				atomic.AddUint32(&p.workCount, 1)
 				if atomic.LoadUint32(&p.workCount) <= atomic.LoadUint32(&p.Cap_) {
 					w := &Worker{Next: func() Task {
 						return p.Pipe.PopTask()
 					}, pool: p}
+					p.AddWorkCount(1)
 					w.doWork(p.Pipe.PopTask())
+					p.AddWorkCount(-1)
 				}
 			}
 		}
 	}()
+}
+
+func (p *DefaultPool) AddWorkCount(delta int) {
+	var ok bool
+	for !ok {
+		newVal := uint32(int(p.workCount) + delta)
+		ok = atomic.CompareAndSwapUint32(&p.workCount, p.workCount, newVal)
+	}
 }
 
 func (p *DefaultPool) Name() string {

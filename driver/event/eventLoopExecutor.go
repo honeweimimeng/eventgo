@@ -17,19 +17,34 @@ type Handler interface {
 }
 
 type LoopExecutor struct {
-	name    string
-	events  []Handler
-	context driver.ExecutorContext
-	sel     *utils.MultiCaseSel[*driver.ExecutorTask]
+	name           string
+	handles        []Handler
+	context        driver.ExecutorContext
+	sel            *utils.MultiCaseSel[*driver.ExecutorTask]
+	eventHandleMap *utils.SafeMap[string, Handler]
 }
 
-func NewEventLoop(ctx driver.ExecutorContext, events []Handler) *LoopExecutor {
-	return &LoopExecutor{
-		name:    FormatHandleName(events),
-		events:  events,
-		context: ctx,
-		sel:     utils.NewMulti[*driver.ExecutorTask](ctx.Config().Name, ctx.Context(), ctx.Config().Logger),
+func NewEventLoop(ctx driver.ExecutorContext, handles []Handler) *LoopExecutor {
+	return (&LoopExecutor{
+		name:           FormatHandleName(handles),
+		handles:        handles,
+		context:        ctx,
+		sel:            utils.NewMulti[*driver.ExecutorTask](ctx.Config().Name, ctx.Context(), ctx.Config().Logger),
+		eventHandleMap: utils.NewSafeMap[string, Handler](),
+	}).initEventHandle()
+}
+
+func (l *LoopExecutor) initEventHandle() *LoopExecutor {
+	for _, handle := range l.handles {
+		for _, event := range handle.Events() {
+			l.eventHandleMap.Put(event.Name(), handle)
+		}
 	}
+	return l
+}
+
+func (l *LoopExecutor) EventHandle() *utils.SafeMap[string, Handler] {
+	return l.eventHandleMap
 }
 
 func (l *LoopExecutor) AddTrigger(trigger Trigger) *LoopExecutor {
@@ -52,7 +67,7 @@ func (l *LoopExecutor) Name() string {
 }
 
 func (l *LoopExecutor) Execute(ch driver.Channel) {
-	for _, item := range l.events {
+	for _, item := range l.handles {
 		l.sel.ChannelHandler(l.context.Group().Channel(item), func(ex *driver.ExecutorTask) {
 			l.Context().Group().Join(ex)
 		})

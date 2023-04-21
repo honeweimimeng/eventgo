@@ -70,6 +70,10 @@ func (sel *MultiCaseSel[T]) Default(handle func(T)) *MultiCaseSel[T] {
 	return sel
 }
 
+func (sel *MultiCaseSel[T]) StartAsync() {
+	go sel.Start()
+}
+
 func (sel *MultiCaseSel[T]) Start() {
 	for {
 		chosen, val, ok := reflect.Select(sel.cases)

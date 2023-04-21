@@ -46,9 +46,14 @@ func (l *LoopDesc) Handler(name string, events []Proto, handle SimpleHandler) *L
 	return l
 }
 
-func (l *LoopDesc) Trigger(trigger SimpleTrigger) *LoopDesc {
-	l.trigger = &ProxyTrigger{trigger: trigger}
-	return l
+func (l *LoopDesc) Trigger(trigger SimpleTrigger) *BootStrap {
+	l.trigger = &ProxyTrigger{trigger: trigger, global: true}
+	return l.boot()
+}
+
+func (l *LoopDesc) ExTrigger(trigger SimpleTrigger) *BootStrap {
+	l.trigger = &ProxyTrigger{trigger: trigger, global: false}
+	return l.boot()
 }
 
 func (l *LoopDesc) MultiTrigger(trigger ...SimpleTrigger) *LoopDesc {
@@ -72,12 +77,14 @@ func (l *LoopDesc) SetCtx(ctx driver.ExecutorContext) {
 		h.ctx = ctx
 		handleInters = append(handleInters, h)
 	}
+	eventLoop := NewEventLoop(ctx, handleInters)
 	l.trigger.ctx = ctx
-	task := NewEventLoop(ctx, handleInters).AddTrigger(l.trigger).TaskMsg("event loop")
+	l.trigger.group = eventLoop
+	task := eventLoop.AddTrigger(l.trigger).TaskMsg("event loop")
 	ctx.Group().Join(task)
 }
 
-func (l *LoopDesc) Boot() *BootStrap {
+func (l *LoopDesc) boot() *BootStrap {
 	l.strap.loop = append(l.strap.loop, l)
 	return l.strap
 }
@@ -110,9 +117,11 @@ func (h *ProxyHandler) Context() driver.ExecutorContext {
 }
 
 type ProxyTrigger struct {
+	global  bool
 	ctx     driver.ExecutorContext
 	next    Trigger
 	trigger SimpleTrigger
+	group   *LoopExecutor
 }
 
 func (e *ProxyTrigger) AcceptEvents(ch chan []Proto) {
@@ -125,4 +134,12 @@ func (e *ProxyTrigger) Next() Trigger {
 
 func (e *ProxyTrigger) Child(trigger Trigger) {
 	e.next = trigger
+}
+
+func (e *ProxyTrigger) Global() bool {
+	return e.global
+}
+
+func (e *ProxyTrigger) LoopGroup() *LoopExecutor {
+	return e.group
 }
