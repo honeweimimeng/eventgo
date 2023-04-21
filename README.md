@@ -19,8 +19,36 @@ boot.EventLoop().Handle(Events(0), func(ch driver.Channel) {
 }).Boot().StartUp()
 time.Sleep(200 * time.Second)
 ```
+### ex eventTrigger
+> Exclusive eventTrigger within EventLoop range,Events that eventLoop doesn't care about will not trigger handle
+```golang
+var boot event.BootStrap
+boot.EventLoop().Handle(Events(0), func(ch driver.Channel) {
+    println("===>")
+	time.Sleep(2 * time.Second)
+	println("===>finish")
+}).ExTrigger(func(ch chan []event.Proto) {
+	ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+	ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+}).Boot().StartUp()
+time.Sleep(200 * time.Second)
+```
+### global eventTrigger
+> global eventTrigger within eventCtx,all event from globalTrigger will trigger handle
+```golang
+var boot event.BootStrap
+boot.EventLoop().Handle(Events(0), func(ch driver.Channel) {
+    println("===>")
+	time.Sleep(2 * time.Second)
+	println("===>finish")
+}).Trigger(func(ch chan []event.Proto) {
+	ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+	ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+}).Boot().StartUp()
+time.Sleep(200 * time.Second)
+```
 ### BootStrap
-> BootStrap provides a fast and elegant way to create,zero friendly
+> BootStrap provides a fast and elegant way to create,zero value friendly
 ### Advanced Usage
 #### Step1 Create Event Handle
 > Inheriting event.Handler is to implement Execute
