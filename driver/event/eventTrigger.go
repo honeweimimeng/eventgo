@@ -13,6 +13,7 @@ type TriggerAdvice struct {
 
 type Trigger interface {
 	Global() bool
+	Initializer() bool
 	AcceptEvents(ch chan []Proto)
 	Next() Trigger
 	Child(trigger Trigger)
@@ -49,8 +50,13 @@ func (m *TriggerManager) listenEvent(ch chan []Proto) (*TriggerManager, []Trigge
 	return m, chains
 }
 
+// add future to check trigger process finish
 func (m *TriggerManager) processChildNext(ch chan []Proto, trigger Trigger) {
-	go trigger.AcceptEvents(ch)
+	if trigger.Initializer() {
+		trigger.AcceptEvents(ch)
+	} else {
+		go trigger.AcceptEvents(ch)
+	}
 	for item := trigger.Next(); item != nil; item = item.Next() {
 		item.AcceptEvents(ch)
 	}
@@ -84,4 +90,8 @@ func (m *TriggerManager) Child(trigger Trigger) {
 
 func (m *TriggerManager) LoopGroup() *LoopExecutor {
 	return nil
+}
+
+func (m *TriggerManager) Initializer() bool {
+	return false
 }

@@ -46,13 +46,13 @@ func (l *LoopDesc) Handler(name string, events []Proto, handle SimpleHandler) *L
 	return l
 }
 
-func (l *LoopDesc) Trigger(trigger SimpleTrigger) *BootStrap {
-	l.trigger = &ProxyTrigger{trigger: trigger, global: true}
+func (l *LoopDesc) Trigger(trigger SimpleTrigger, isInitializer bool) *BootStrap {
+	l.trigger = &ProxyTrigger{trigger: trigger, global: true, isInitializer: isInitializer}
 	return l.boot()
 }
 
-func (l *LoopDesc) ExTrigger(trigger SimpleTrigger) *BootStrap {
-	l.trigger = &ProxyTrigger{trigger: trigger, global: false}
+func (l *LoopDesc) ExTrigger(trigger SimpleTrigger, isInitializer bool) *BootStrap {
+	l.trigger = &ProxyTrigger{trigger: trigger, global: false, isInitializer: isInitializer}
 	return l.boot()
 }
 
@@ -117,11 +117,12 @@ func (h *ProxyHandler) Context() driver.ExecutorContext {
 }
 
 type ProxyTrigger struct {
-	global  bool
-	ctx     driver.ExecutorContext
-	next    Trigger
-	trigger SimpleTrigger
-	group   *LoopExecutor
+	global        bool
+	ctx           driver.ExecutorContext
+	next          Trigger
+	trigger       SimpleTrigger
+	group         *LoopExecutor
+	isInitializer bool
 }
 
 func (e *ProxyTrigger) AcceptEvents(ch chan []Proto) {
@@ -142,4 +143,8 @@ func (e *ProxyTrigger) Global() bool {
 
 func (e *ProxyTrigger) LoopGroup() *LoopExecutor {
 	return e.group
+}
+
+func (e *ProxyTrigger) Initializer() bool {
+	return e.isInitializer
 }

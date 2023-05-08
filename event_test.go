@@ -66,12 +66,13 @@ func TestNormalSocketEvent(t *testing.T) {
 		ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
 		time.Sleep(2 * time.Second)
 		ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
-	}).EventLoop().Handle(Events2(0), func(ch driver.Channel) {
+	}, false).EventLoop().Handle(Events2(0), func(ch driver.Channel) {
 		println("===>eventLoop1")
 	}).Trigger(func(ch chan []event.Proto) {
-		time.Sleep(2 * time.Second)
-		ch <- []event.Proto{HappenEvent2(0, "T2WRITE", "write msg")}
-		ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
-	}).StartUp()
+		//time.Sleep(2 * time.Second)
+		//ch <- []event.Proto{HappenEvent2(0, "T2WRITE", "write msg")}
+		//ch <- []event.Proto{HappenEvent(0, "WRITE", "write msg")}
+		println("====>")
+	}, true).StartUp()
 	time.Sleep(200 * time.Second)
 }
